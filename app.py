@@ -27,6 +27,27 @@ def home():
         "status": "running"
     })
 
+def trigger_alert(monitor_id):
+    """Called when a timer expires, indicating the device missed its heartbeat."""
+    with monitors_lock:
+        if monitor_id in monitors:
+            monitor = monitors[monitor_id]
+
+            if monitor['status'] != 'down':
+                alert_message = {
+                    "ALERT": f"Device {monitor_id} is down!",
+                    "time": datetime.now().isoformat(),
+                    "device_id": monitor_id,
+                    "alert_email": monitor.get('alert_email', 'N/A')
+                }
+
+                print("=" * 60)
+                print(json.dumps(alert_message, indent=2))
+                print("=" * 60)
+
+                monitor['status'] = 'down'
+                monitor['timer'] = None
+
 
 @app.route('/health', methods=['GET'])
 def health_check():
