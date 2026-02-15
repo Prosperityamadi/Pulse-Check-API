@@ -84,7 +84,57 @@ def index():
             "GET /health"
         ]
     }), 200
-    
+
+@app.route('/monitors', methods=['POST'])
+def create_monitor():
+    """Register a new device for monitoring.
+
+    Request body:
+    {
+        "id": "device-123",
+        "timeout": 60,
+        "alert_email": "admin@critmon.com"
+    }
+    """
+    data = request.get_json()
+
+    if not data or 'id' not in data or 'timeout' not in data:
+        return jsonify({
+            "error": "Missing required fields: 'id' and 'timeout'"
+        }), 400
+
+    monitor_id = data['id']
+    timeout = data['timeout']
+    alert_email = data.get('alert_email', 'not_provided@example.com')
+
+    if monitor_id in monitors:
+        return jsonify({
+            "error": f"Monitor {monitor_id} already exists"
+        }), 409
+
+    with monitors_lock:
+        monitors[monitor_id] = {
+            'id': monitor_id,
+            'timeout': timeout,
+            'alert_email': alert_email,
+            'status': 'active',
+            'timer': None,
+            'last_heartbeat': None,
+            'created_at': datetime.now().isoformat()
+        }
+
+    start_timer(monitor_id, timeout)
+
+    return jsonify({
+        "message": f"Monitor {monitor_id} created successfully",
+        "monitor": {
+            "id": monitor_id,
+            "timeout": timeout,
+            "status": "active"
+        }
+    }), 201
+
+
 @app.route('/health', methods=['GET'])
 def health_check():
     """Simple health check endpoint."""
