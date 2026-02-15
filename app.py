@@ -176,6 +176,26 @@ def pause_monitor(monitor_id):
         "status": "paused"
     }), 200
 
+@app.route('/monitors', methods=['GET'])
+def list_monitors():
+    """Get all monitors with their current status."""
+    with monitors_lock:
+        monitor_list = []
+        for monitor_id, monitor in monitors.items():
+            monitor_list.append({
+                'id': monitor['id'],
+                'timeout': monitor['timeout'],
+                'status': monitor['status'],
+                'alert_email': monitor['alert_email'],
+                'last_heartbeat': monitor['last_heartbeat'],
+                'created_at': monitor.get('created_at')
+            })
+
+    return jsonify({
+        "monitors": monitor_list,
+        "total": len(monitor_list)
+    }), 200
+
 @app.route('/health', methods=['GET'])
 def health_check():
     """Simple health check endpoint."""
