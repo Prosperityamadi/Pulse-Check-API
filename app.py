@@ -134,6 +134,30 @@ def create_monitor():
         }
     }), 201
 
+@app.route('/monitors/<monitor_id>/heartbeat', methods=['POST'])
+def heartbeat(monitor_id):
+    """Device sends a heartbeat to reset its countdown timer.
+
+    Also revives a 'down' monitor or resumes a 'paused' one.
+    """
+    with monitors_lock:
+        if monitor_id not in monitors:
+            return jsonify({
+                "error": f"Monitor {monitor_id} not found"
+            }), 404
+
+        monitor = monitors[monitor_id]
+
+        if monitor['status'] in ('down', 'paused'):
+            monitor['status'] = 'active'
+
+    start_timer(monitor_id, monitors[monitor_id]['timeout'])
+
+    return jsonify({
+        "message": f"Heartbeat received for {monitor_id}",
+        "status": "timer_reset",
+        "next_expiry": monitors[monitor_id]['timeout']
+    }), 200
 
 @app.route('/health', methods=['GET'])
 def health_check():
