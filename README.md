@@ -66,12 +66,19 @@ flowchart TD
    cd pulse-check-api
    ```
 
-2. **Install dependencies**
+2. **Create a virtual environment**
+   ```bash
+   python -m venv venv
+   source venv/bin/activate        # macOS/Linux
+   venv\Scripts\activate           # Windows
+   ```
+
+3. **Install dependencies(installs Flask and all required packages)** 
    ```bash
    pip install -r requirements.txt
    ```
 
-3. **Run the server**
+4. **Run the server**
    ```bash
    python app.py
    ```
