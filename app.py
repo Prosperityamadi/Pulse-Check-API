@@ -69,7 +69,22 @@ def cancel_timer(monitor_id):
         monitors[monitor_id]['timer'].cancel()
         monitors[monitor_id]['timer'] = None
 
-
+@app.route('/', methods=['GET'])
+def index():
+    """Root endpoint listing all available API routes."""
+    return jsonify({
+        "message": "Welcome to Pulse-Check API",
+        "endpoints": [
+            "POST /monitors",
+            "GET /monitors",
+            "GET /monitors/<id>",
+            "DELETE /monitors/<id>",
+            "POST /monitors/<id>/heartbeat",
+            "POST /monitors/<id>/pause",
+            "GET /health"
+        ]
+    }), 200
+    
 @app.route('/health', methods=['GET'])
 def health_check():
     """Simple health check endpoint."""
