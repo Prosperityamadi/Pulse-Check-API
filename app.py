@@ -159,6 +159,23 @@ def heartbeat(monitor_id):
         "next_expiry": monitors[monitor_id]['timeout']
     }), 200
 
+@app.route('/monitors/<monitor_id>/pause', methods=['POST'])
+def pause_monitor(monitor_id):
+    """Pause monitoring for a device (e.g., during planned maintenance)."""
+    with monitors_lock:
+        if monitor_id not in monitors:
+            return jsonify({
+                "error": f"Monitor {monitor_id} not found"
+            }), 404
+
+        cancel_timer(monitor_id)
+        monitors[monitor_id]['status'] = 'paused'
+
+    return jsonify({
+        "message": f"Monitor {monitor_id} paused",
+        "status": "paused"
+    }), 200
+
 @app.route('/health', methods=['GET'])
 def health_check():
     """Simple health check endpoint."""
