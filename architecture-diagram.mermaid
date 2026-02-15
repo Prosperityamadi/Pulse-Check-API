@@ -1,0 +1,34 @@
+sequenceDiagram
+    participant Device as Remote Device
+    participant API as Pulse-Check API
+    participant Timer as Timer Service
+    participant Alert as Alert System
+
+    Note over Device,Alert: 1. REGISTRATION FLOW
+    Device->>API: POST /monitors<br/>{id, timeout, alert_email}
+    API->>Timer: Create new timer (60s countdown)
+    Timer-->>Timer: Start countdown
+    API-->>Device: 201 Created ✓
+
+    Note over Device,Alert: 2. HEARTBEAT FLOW (Normal Operation)
+    Device->>API: POST /monitors/{id}/heartbeat
+    API->>Timer: Reset timer to 60s
+    Timer-->>Timer: Restart countdown
+    API-->>Device: 200 OK ✓
+
+    Note over Device,Alert: 3. ALERT FLOW (Device Goes Down)
+    Timer-->>Timer: Countdown reaches 0
+    Timer->>Alert: Trigger alert!
+    Alert-->>Alert: Log: "Device {id} is down!"
+    Alert-->>Alert: Update status to "down"
+
+    Note over Device,Alert: 4. PAUSE FLOW (Bonus Feature)
+    Device->>API: POST /monitors/{id}/pause
+    API->>Timer: Pause countdown
+    Timer-->>Timer: Stop timer
+    API-->>Device: 200 OK ✓
+    
+    Device->>API: POST /monitors/{id}/heartbeat
+    API->>Timer: Resume & reset to 60s
+    Timer-->>Timer: Restart countdown
+    API-->>Device: 200 OK ✓
