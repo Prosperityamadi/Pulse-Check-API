@@ -215,6 +215,22 @@ def get_monitor(monitor_id):
             'created_at': monitor.get('created_at')
         }), 200
 
+@app.route('/monitors/<monitor_id>', methods=['DELETE'])
+def delete_monitor(monitor_id):
+    """Remove a monitor and cancel its timer."""
+    with monitors_lock:
+        if monitor_id not in monitors:
+            return jsonify({
+                "error": f"Monitor {monitor_id} not found"
+            }), 404
+
+        cancel_timer(monitor_id)
+        del monitors[monitor_id]
+
+    return jsonify({
+        "message": f"Monitor {monitor_id} deleted successfully"
+    }), 200
+
 @app.route('/health', methods=['GET'])
 def health_check():
     """Simple health check endpoint."""
