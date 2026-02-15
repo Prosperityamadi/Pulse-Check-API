@@ -63,6 +63,12 @@ def start_timer(monitor_id, timeout_seconds):
             monitors[monitor_id]['status'] = 'active'
             monitors[monitor_id]['last_heartbeat'] = datetime.now().isoformat()
 
+def cancel_timer(monitor_id):
+    """Stop a timer without triggering an alert. Caller must hold monitors_lock."""
+    if monitor_id in monitors and monitors[monitor_id]['timer'] is not None:
+        monitors[monitor_id]['timer'].cancel()
+        monitors[monitor_id]['timer'] = None
+
 
 @app.route('/health', methods=['GET'])
 def health_check():
