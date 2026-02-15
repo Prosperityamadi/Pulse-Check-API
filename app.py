@@ -48,6 +48,21 @@ def trigger_alert(monitor_id):
                 monitor['status'] = 'down'
                 monitor['timer'] = None
 
+def start_timer(monitor_id, timeout_seconds):
+    """Start or reset the countdown timer for a monitor."""
+    with monitors_lock:
+        if monitor_id in monitors:
+            if monitors[monitor_id]['timer'] is not None:
+                monitors[monitor_id]['timer'].cancel()
+
+            new_timer = Timer(timeout_seconds, trigger_alert,
+                              args=[monitor_id])
+            new_timer.start()
+
+            monitors[monitor_id]['timer'] = new_timer
+            monitors[monitor_id]['status'] = 'active'
+            monitors[monitor_id]['last_heartbeat'] = datetime.now().isoformat()
+
 
 @app.route('/health', methods=['GET'])
 def health_check():
