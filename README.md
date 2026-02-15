@@ -7,35 +7,31 @@ A Dead Man's Switch API for monitoring remote devices (solar farms, weather stat
 ### SYSTEM FLOW DIAGRAM
 
 ```mermaid
-sequenceDiagram
-    participant Device as Remote Device
-    participant API as Pulse-Check API
-    participant Timer as Timer Service
-    participant Alert as Alert System
+flowchart TD
+    A["Device sends POST /monitors"] --> B["API validates request"]
+    B --> C{"Valid data?"}
+    C -- No --> D["Return 400 Bad Request"]
+    C -- Yes --> E{"Monitor exists?"}
+    E -- Yes --> F["Return 409 Conflict"]
+    E -- No --> G["Store monitor in memory"]
+    G --> H["Start countdown timer"]
+    H --> I["Return 201 Created"]
 
-    Note over Device,Alert: 1. REGISTRATION FLOW
-    Device->>API: POST /monitors<br/>{id, timeout, alert_email}
-    API->>Timer: Create new timer (60s countdown)
-    Timer-->>Timer: Start countdown
-    API-->>Device: 201 Created ✓
+    I --> J{"Waiting for heartbeat..."}
 
-    Note over Device,Alert: 2. HEARTBEAT FLOW (Normal Operation)
-    Device->>API: POST /monitors/{id}/heartbeat
-    API->>Timer: Reset timer to 60s
-    Timer-->>Timer: Restart countdown
-    API-->>Device: 200 OK ✓
+    J --> K["Device sends heartbeat"]
+    K --> L["Reset timer to full duration"]
+    L --> J
 
-    Note over Device,Alert: 3. ALERT FLOW (Device Goes Down)
-    Timer-->>Timer: Countdown reaches 0
-    Timer->>Alert: Trigger alert!
-    Alert-->>Alert: Log: "Device {id} is down!"
-    Alert-->>Alert: Update status to "down"
+    J --> M["Timer reaches 0"]
+    M --> N["Trigger alert: Device is down!"]
+    N --> O["Set status to 'down'"]
 
-    Note over Device,Alert: 4. PAUSE FLOW (Bonus Feature)
-    Device->>API: POST /monitors/{id}/pause
-    API->>Timer: Pause countdown
-    Timer-->>Timer: Stop timer
-    API-->>Device: 200 OK ✓
+    J --> P["Device sends pause request"]
+    P --> Q["Cancel timer"]
+    Q --> R["Set status to 'paused'"]
+    R --> S{"Waiting for heartbeat to resume..."}
+    S --> K
 ```
 
 ### HOW IT WORKS
