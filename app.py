@@ -196,6 +196,25 @@ def list_monitors():
         "total": len(monitor_list)
     }), 200
 
+@app.route('/monitors/<monitor_id>', methods=['GET'])
+def get_monitor(monitor_id):
+    """Get detailed status of a specific monitor."""
+    with monitors_lock:
+        if monitor_id not in monitors:
+            return jsonify({
+                "error": f"Monitor {monitor_id} not found"
+            }), 404
+
+        monitor = monitors[monitor_id]
+        return jsonify({
+            'id': monitor['id'],
+            'timeout': monitor['timeout'],
+            'status': monitor['status'],
+            'alert_email': monitor['alert_email'],
+            'last_heartbeat': monitor['last_heartbeat'],
+            'created_at': monitor.get('created_at')
+        }), 200
+
 @app.route('/health', methods=['GET'])
 def health_check():
     """Simple health check endpoint."""
